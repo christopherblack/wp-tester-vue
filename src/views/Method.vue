@@ -1,70 +1,84 @@
 <template lang="pug">
   el-row( :gutter="40" )
     el-col(:span="10")
-      el-form( :model="form" label-width="120px" :rules="validation" :disabled="isLoading" )
-        h1(style="margin-top: 0") Parameters
-        el-form-item( label="Site domain" prop="host" )
-          el-input( v-model="form.host" placeholder="Enter website URL with protocol (http/https)" @input="(value) => { updateStore(value, 'host') }" )
-        el-form-item( label="Auth type" )
-          el-radio-group.radio( v-model="form.authType" @change="(value) => { updateStore(value, 'authType') }")
-            el-radio( label="cookie" ) Cookie 
-              el-tooltip( placement="right" )
-                div( slot="content" )
-                  | Built-in native WP API auth type. 
-                  br
-                  | Works only if user is logged-in to WP Admin panel in the same browser, where requests're made from
-                i.el-icon-question
-            el-radio( label="jwt" ) Javascript Web Tokens 
-              el-tooltip( placement="right" )
-                div( slot="content" )
-                  | Requires a 
-                  a( href="https://ru.wordpress.org/plugins/jwt-authentication-for-wp-rest-api/" target="_blank" style="color: white" ) WP plugin 
-                  | installed to work.
-                i.el-icon-question
-            el-radio( label="http" disabled ) Basic HTTP 
-              el-tooltip( placement="right" )
-                div( slot="content" )
-                  | Requires a 
-                  a( href="https://github.com/WP-API/Basic-Auth" target="_blank" style="color: white" ) WP plugin 
-                  | installed to work.
-                i.el-icon-question
-            el-radio( label="oauth" disabled ) OAuth 
-              el-tooltip( placement="right" )
-                div( slot="content" )
-                  | Requires a 
-                  a( href="https://wordpress.org/plugins/rest-api-oauth1/" target="_blank" style="color: white" ) WP plugin 
-                  | installed to work.
-                i.el-icon-question
-        el-form-item
-          el-button( type="primary" @click="sendData" :loading="isLoading" )
-            i.el-icon-lightning
-            span Send
+      h1(style="margin-top: 0") Parameters
+        el-button.submit( type="primary" @click="sendData" :loading="isLoading" )
+          i.el-icon-lightning
+          span Send
+      el-form( :model="form" label-width="130px" :rules="validation" :disabled="isLoading || requestMethod !== 'post'" )
+        el-form-item( v-for="(field, key) in model" :label="field.label" :prop="key" :key="key" )
+          el-input( 
+            v-if="field.type === 'string' || field.type === 'array' || field.type === 'password'" 
+            v-model="form[key]" :placeholder="field.hint" 
+            :show-password="field.type === 'password'"
+            @input="modified[key] = true"
+          )
+          el-input( 
+            v-else-if="field.type === 'stringMultiline'" 
+            v-model="form[key]" 
+            :placeholder="field.hint" 
+            type="textarea" 
+            :rows="2"
+            @input="modified[key] = true"
+          )
+          el-select( 
+            v-else-if="field.type === 'select'" 
+            v-model="form[key]" 
+            :placeholder="field.hint"
+            @change="modified[key] = true"
+          )
+            el-option( v-for="(value, index) in field.options" :label="value" :key="index" :value="value" )
+          el-input-number( 
+            v-else-if="field.type === 'number'" 
+            controls-position="right" 
+            :min="0" 
+            v-model="form[key]" 
+            :placeholder="field.hint"
+            @change="modified[key] = true"
+          )
+          el-switch( 
+            v-else-if="field.type === 'switch'" 
+            v-model="form[key]" 
+            :placeholder="field.hint"
+            :active-value="field.options && field.options.active || true"
+            :inactive-value="field.options && field.options.inactive || false"
+            :active-text="field.options && field.options.active || null"
+            :inactive-text="field.options && field.options.inactive || null"
+            @change="modified[key] = true"
+          )
+          el-date-picker(
+            v-else-if="field.type === 'datetime'"
+            v-model="form[key]"
+            type="datetime"
+            :placeholder="field.hint"
+            @change="modified[key] = true"
+          )
     el-col( :span="14")
       el-row
         el-col( :span="24" )
-          Request(:payload="requestData")
+          Request(:data="{ data: requestData }" :url="requestUrl")
       el-row
         el-col( :span="24" )
-          Request(:payload="response.data" :loading="isLoading" label="Response")
+          Response(:data="response" :loading="isLoading" :error="error")
 </template>
 
 <script>
 import Request from '../components/Request'
-import { Posts } from '../models'
+import Response from '../components/Response'
+import Models from '../models'
 import axios from 'axios'  
 export default {
   name: 'Method',
-  components: { Request },
+  components: { Request, Response },
   data() {
     return {
-      form: {
-        host: this.$store.state.host || '',
-        authType: this.$store.state.authType || 'cookie',
-        username: this.$store.state.username || '',
-        password: this.$store.state.password || ''
-      },
-      model: Posts,
+      form: {},
+      modified: {},
+      id: 0,
+      model: Models(this.$route.params.type),
+      requestUrl: `${this.$store.state.host}${this.$store.state.apiBasePath}${this.$route.params.type}/${this.id || ''}`,
       response: {},
+      error: false,
       validation: {
         host: {
           validator: (rule, value, callback) => {
@@ -82,17 +96,68 @@ export default {
   },
   computed: {
     requestData() {
-      return this.form
+      if (this.requestMethod !== 'post') return  {}
+      const tmpObj = {}
+      Object.keys(this.modified).forEach(key => {
+        if (this.modified[key]) {
+          tmpObj[key] = this.model[key].type === 'array' ? this.form[key].split(',').map(value => +value) : this.form[key]
+        }
+      })
+      return tmpObj
+    },
+    requestMethod() {
+      switch (this.$route.params.reqType) {
+        case 'create':
+        case 'update':
+          return 'post'
+        case 'list':
+        case 'listSingle':
+          return 'get'
+        case 'delete':
+          return 'delete'
+      }
+      return 'get'
     }
+  },
+  created() {
+    Object.keys(this.model).forEach((key) => {
+      this.$set(this.form, key, '')
+      this.$set(this.modified, key, false)
+    })
   },
   methods: {
     sendData() {
-      // TODO: Add request
+      this.isLoading = true
+      this.error = false
+      axios({
+        method: this.requestMethod,
+        url: this.requestUrl,
+        data: this.requestData,
+        headers: {
+          'Authorization': this.$store.state.authType === 'jwt' ? `Bearer ${this.$store.state.token}` : null
+        }
+      })
+        .then(response => {
+          this.isLoading = false
+          this.response = response
+        })
+        .catch((error) => {
+          this.isLoading = false
+          this.error = true
+          this.response = error.response
+        })
     }
   }
 };
 </script>
 
 <style scoped>
-
+  .el-radio {
+    display: block;
+    margin: 10px 0;
+  }
+  .submit {
+    margin-left: 15px;
+    float: right;
+  }
 </style>

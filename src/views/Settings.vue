@@ -12,7 +12,11 @@
                 div( slot="content" ) 
                   | Built-in native WP API auth type. 
                   br
-                  | Works only if user is logged-in to WP Admin panel in the same browser, where requests're made from
+                  | Works only if user is logged-in to WP Admin panel in the same browser, where requests're made from.
+                  br
+                  | Also only supports GET requests, because there's no 
+                  a(href="https://remonpel.nl/2018/06/wordpress-rest-api-nonce-sense/") easy way to get nonces 
+                  | from WP.
                 i.el-icon-question
             el-radio( label="jwt" ) Javascript Web Tokens 
               el-tooltip( placement="right" )
@@ -95,7 +99,7 @@ export default {
             password: this.$store.getters.getPassword
           }
       }
-      return {}
+      return ''
     }
   },
   methods: {
@@ -114,13 +118,11 @@ export default {
           this.isLoading = false
           this.response = response
           this.$store.dispatch('setToken', response.data.token)
-          debugger
         })
         .catch((error) => {
           this.isLoading = false
           this.error = true
           this.response = error.response
-          debugger
         })
     }
   }
@@ -130,5 +132,6 @@ export default {
 <style scoped lang="scss">
 .el-radio {
   display: block;
+  margin: 10px 0;
 }
 </style>

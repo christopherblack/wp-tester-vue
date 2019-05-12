@@ -30,7 +30,8 @@ body {
     .aside {
       width: 200px !important;
       height: 100%;
-      position: absolute;
+      position: fixed;
+      overflow: auto;
       box-shadow: rgb(230, 230, 230) 0px 0px 10px;
     }
     .main {

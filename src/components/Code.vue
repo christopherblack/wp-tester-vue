@@ -1,5 +1,5 @@
 <template lang="pug">
-  pre.code
+  pre.code(:class="{disabled: !Boolean(codeString)}")
     code.language-json( :key="keyHook" ref="code" ) {{ codeString }}
 </template>
 
@@ -10,7 +10,7 @@ export default {
   props: {
     codeString: {
       type: String,
-      default: () => {}
+      default: ''
     }
   },
   data() {
@@ -35,8 +35,12 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   .code {
     min-height: 100px;
+    &.disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
   }
 </style>

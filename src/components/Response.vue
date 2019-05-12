@@ -22,8 +22,8 @@ export default {
       default: () => {}
     },
     error: {
-      type: Object,
-      default: () => {}
+      type: Boolean,
+      default: false
     }
   },
   computed: {

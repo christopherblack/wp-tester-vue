@@ -1,3 +1,8 @@
 import Posts from './posts'
 
-export { Posts }
+export default (model) => {
+  switch (model) {
+    case 'posts':
+      return Posts
+  }
+}
