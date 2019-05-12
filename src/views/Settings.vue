@@ -113,6 +113,7 @@ export default {
         .then(response => {
           this.isLoading = false
           this.response = response
+          this.$store.dispatch('setToken', response.data.token)
           debugger
         })
         .catch((error) => {

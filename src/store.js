@@ -13,6 +13,7 @@ export default new Vuex.Store({
     authType: Cookies.get('authType') || 'cookie',
     username: Cookies.get('username') || '',
     password: Cookies.get('password') || '',
+    token: Cookies.get('token') || '',
     apiBasePath: '/wp-json/wp/v2/'
   },
   mutations: {
@@ -27,6 +28,9 @@ export default new Vuex.Store({
     },
     SET_PASSWORD: (state, password) => {
       state.password = password
+    },
+    SET_TOKEN: (state, token) => {
+      state.token = token
     },
   },
   actions: {
@@ -47,6 +51,10 @@ export default new Vuex.Store({
       Cookies.set('password', passEncrypted)
       commit('SET_PASSWORD', passEncrypted)
     },
+    setToken({commit}, token) {
+      Cookies.set('token', token)
+      commit('SET_TOKEN', token)
+    }
   },
   getters: {
     getPassword: state => simpleCrypto.decrypt(state.password)
