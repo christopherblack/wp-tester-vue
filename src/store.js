@@ -35,8 +35,13 @@ export default new Vuex.Store({
   },
   actions: {
     setHost({ commit }, host) {
-      Cookies.set('host', host)
-      commit('SET_HOST', host)
+      let regExp = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b/)
+      if (regExp.test(host)) {
+        const hostFormatted = host.match(regExp)[0]
+        Cookies.set('host', hostFormatted)
+        commit('SET_HOST', hostFormatted)
+      }
+      
     },
     setAuthType({ commit }, authType) {
       Cookies.set('authType', authType)

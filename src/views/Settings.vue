@@ -75,13 +75,13 @@ export default {
       validation: {
         host: {
           validator: (rule, value, callback) => {
-            if (new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/).test(value)) {
+            if (new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}$/).test(value)) {
               callback()
             } else {
               callback(new Error('Please enter URL, starting with http:// or https://'));
             }
           },
-          trigger: 'blur'
+          trigger: 'change'
         }
       },
       isLoading: false,

@@ -53,6 +53,12 @@
             :placeholder="field.hint"
             @change="modified[key] = true"
           )
+          ObjectConstructor(
+            v-else-if="field.type === 'object'"
+            :type="$route.params.type"
+            :field="key"
+            @change="modified[key] = true"
+          )
     el-col( :span="14")
       el-row
         el-col( :span="24" )
@@ -66,10 +72,11 @@
 import Request from '../components/Request'
 import Response from '../components/Response'
 import Models from '../models'
-import axios from 'axios'  
+import axios from 'axios'
+import ObjectConstructor from '../components/ObjectConstructor';  
 export default {
   name: 'Method',
-  components: { Request, Response },
+  components: { ObjectConstructor, Request, Response },
   data() {
     return {
       form: {},
@@ -135,7 +142,9 @@ export default {
         data: this.requestData,
         headers: {
           'Authorization': this.$store.state.authType === 'jwt' ? `Bearer ${this.$store.state.token}` : null
-        }
+        },
+        timeout: 5000
+        // TODO: Add Timeout error callback
       })
         .then(response => {
           this.isLoading = false

@@ -60,7 +60,7 @@ export default {
   },
   meta: {
     type: 'object',
-    title: 'Meta fields',
+    label: 'Meta fields',
     hint: 'Meta fields'
   },
   password: {
